@@ -1,120 +1,157 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Loader2, Eye, EyeOff } from "lucide-react"
-import { useAuth } from "@/contexts/auth-context"
-import { useLanguage } from "@/contexts/language-context"
-import { useToast } from "@/hooks/use-toast"
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Loader2, Eye, EyeOff } from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
+import { useToast } from "@/hooks/use-toast";
 
 interface LoginModalProps {
-  isOpen: boolean
-  onClose: () => void
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 export function LoginModal({ isOpen, onClose }: LoginModalProps) {
-  const [activeTab, setActiveTab] = useState("login")
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState("login");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     name: "",
+    phone: "",
     confirmPassword: "",
-  })
+    preferred_language: "en",
+  });
 
-  const { login, register } = useAuth()
-  const { t } = useLanguage()
-  const { toast } = useToast()
+  const { login, register } = useAuth();
+  const { t } = useLanguage();
+  const { toast } = useToast();
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
 
     try {
-      const success = await login(formData.email, formData.password)
+      const success = await login(formData.email, formData.password);
       if (success) {
         toast({
           title: t("common.success"),
           description: "Welcome back!",
-        })
-        onClose()
-        setFormData({ email: "", password: "", name: "", confirmPassword: "" })
+        });
+        onClose();
+        setFormData({
+          email: "",
+          password: "",
+          name: "",
+          phone: "",
+          confirmPassword: "",
+          preferred_language: "en",
+        });
       } else {
         toast({
           title: t("common.error"),
           description: "Invalid email or password",
           variant: "destructive",
-        })
+        });
       }
     } catch (error) {
       toast({
         title: t("common.error"),
         description: "Something went wrong. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
       toast({
         title: t("common.error"),
         description: "Passwords do not match",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
-      const success = await register(formData.email, formData.password, formData.name)
+      const success = await register({
+        email: formData.email,
+        password: formData.password,
+        name: formData.name,
+        phone: formData.phone,
+        preferred_language: formData.preferred_language,
+      });
       if (success) {
         toast({
           title: t("common.success"),
           description: "Account created successfully!",
-        })
-        onClose()
-        setFormData({ email: "", password: "", name: "", confirmPassword: "" })
+        });
+        onClose();
+        setFormData({
+          email: "",
+          password: "",
+          name: "",
+          phone: "",
+          confirmPassword: "",
+          preferred_language: "en",
+        });
       } else {
         toast({
           title: t("common.error"),
           description: "Failed to create account",
           variant: "destructive",
-        })
+        });
       }
     } catch (error) {
       toast({
         title: t("common.error"),
         description: "Something went wrong. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Welcome to FOMO English</DialogTitle>
-          <DialogDescription>Sign in to access your courses and subscription benefits</DialogDescription>
+          <DialogDescription>
+            Sign in to access your courses and subscription benefits
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -143,7 +180,9 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     id="login-password"
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
-                    onChange={(e) => handleInputChange("password", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("password", e.target.value)
+                    }
                     required
                   />
                   <Button
@@ -153,7 +192,11 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
               </div>
@@ -189,13 +232,45 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="register-phone">Phone Number</Label>
+                <Input
+                  id="register-phone"
+                  type="tel"
+                  placeholder="+84123456789"
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange("phone", e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="register-language">Preferred Language</Label>
+                <Select
+                  value={formData.preferred_language}
+                  onValueChange={(value) =>
+                    handleInputChange("preferred_language", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="vi">Tiếng Việt</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="register-password">Password</Label>
                 <div className="relative">
                   <Input
                     id="register-password"
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
-                    onChange={(e) => handleInputChange("password", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("password", e.target.value)
+                    }
                     required
                   />
                   <Button
@@ -205,18 +280,26 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="register-confirm-password">Confirm Password</Label>
+                <Label htmlFor="register-confirm-password">
+                  Confirm Password
+                </Label>
                 <Input
                   id="register-confirm-password"
                   type="password"
                   value={formData.confirmPassword}
-                  onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("confirmPassword", e.target.value)
+                  }
                   required
                 />
               </div>
@@ -230,5 +313,5 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
         </Tabs>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

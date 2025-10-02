@@ -1,156 +1,171 @@
-"use client"
+"use client";
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  type ReactNode,
+} from "react";
+import { apiClient } from "@/lib/api";
 
 interface User {
-  id: string
-  email: string
-  name: string
-  subscriptionStatus: "none" | "active" | "expired"
-  subscriptionPlan?: string
-  subscriptionExpiry?: Date
-  purchasedCourses: string[]
-  joinedCommunity: boolean
+  id: string;
+  email: string;
+  name: string;
+  phone?: string;
+  points: number;
+  preferred_language: string;
+  profile_image_url?: string;
+  course_purchases: any[];
+  workbook_purchases: any[];
+  course_progress: any[];
+  created_at: string;
+  last_login?: string;
 }
 
 interface AuthContextType {
-  user: User | null
-  isLoading: boolean
-  login: (email: string, password: string) => Promise<boolean>
-  register: (email: string, password: string, name: string) => Promise<boolean>
-  logout: () => void
-  updateSubscription: (plan: string, expiry: Date) => void
-  addPurchasedCourse: (courseId: string) => void
-  hasAccess: (type: "course" | "subscription", id?: string) => boolean
+  user: User | null;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (data: {
+    email: string;
+    password: string;
+    name: string;
+    phone: string;
+    preferred_language: string;
+  }) => Promise<boolean>;
+  logout: () => Promise<void>;
+  updateProfile: (data: {
+    name?: string;
+    phone?: string;
+    profile_image_url?: string;
+    preferred_language?: string;
+  }) => Promise<boolean>;
+  refreshProfile: () => Promise<void>;
+  hasPurchasedCourse: (courseId: string) => boolean;
+  hasPurchasedWorkbook: (workbookId: string) => boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load user from localStorage on mount
+  // Check for existing token and load user profile on mount
   useEffect(() => {
-    const savedUser = localStorage.getItem("fomo-english-user")
-    if (savedUser) {
-      try {
-        const parsedUser = JSON.parse(savedUser)
-        // Convert expiry date string back to Date object
-        if (parsedUser.subscriptionExpiry) {
-          parsedUser.subscriptionExpiry = new Date(parsedUser.subscriptionExpiry)
+    const initializeAuth = async () => {
+      const token = localStorage.getItem("access_token");
+      if (token) {
+        apiClient.setToken(token);
+        try {
+          const profile = await apiClient.getProfile();
+          setUser(profile);
+        } catch (error) {
+          console.error("Error loading user profile:", error);
+          apiClient.removeToken();
         }
-        setUser(parsedUser)
-      } catch (error) {
-        console.error("Error parsing saved user:", error)
-        localStorage.removeItem("fomo-english-user")
       }
-    }
-    setIsLoading(false)
-  }, [])
+      setIsLoading(false);
+    };
 
-  // Save user to localStorage when it changes
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem("fomo-english-user", JSON.stringify(user))
-    } else {
-      localStorage.removeItem("fomo-english-user")
-    }
-  }, [user])
+    initializeAuth();
+  }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // Mock user data - in real app, this would come from your backend
-      const mockUser: User = {
-        id: "1",
-        email,
-        name: email.split("@")[0],
-        subscriptionStatus: "none",
-        purchasedCourses: [],
-        joinedCommunity: false,
-      }
-
-      setUser(mockUser)
-      return true
+      const response = await apiClient.login({ email, password });
+      apiClient.setToken(response.access_token);
+      setUser(response.user);
+      return true;
     } catch (error) {
-      console.error("Login error:", error)
-      return false
+      console.error("Login error:", error);
+      return false;
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  const register = async (email: string, password: string, name: string): Promise<boolean> => {
-    setIsLoading(true)
+  const register = async (data: {
+    email: string;
+    password: string;
+    name: string;
+    phone: string;
+    preferred_language: string;
+  }): Promise<boolean> => {
+    setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      const newUser: User = {
-        id: Date.now().toString(),
-        email,
-        name,
-        subscriptionStatus: "none",
-        purchasedCourses: [],
-        joinedCommunity: false,
-      }
-
-      setUser(newUser)
-      return true
+      const response = await apiClient.register(data);
+      apiClient.setToken(response.access_token);
+      setUser(response.user);
+      return true;
     } catch (error) {
-      console.error("Registration error:", error)
-      return false
+      console.error("Registration error:", error);
+      return false;
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  const logout = () => {
-    setUser(null)
-  }
-
-  const updateSubscription = (plan: string, expiry: Date) => {
-    if (user) {
-      setUser({
-        ...user,
-        subscriptionStatus: "active",
-        subscriptionPlan: plan,
-        subscriptionExpiry: expiry,
-        joinedCommunity: true,
-      })
+  const logout = async (): Promise<void> => {
+    try {
+      await apiClient.logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      apiClient.removeToken();
+      setUser(null);
     }
-  }
+  };
 
-  const addPurchasedCourse = (courseId: string) => {
-    if (user && !user.purchasedCourses.includes(courseId)) {
-      setUser({
-        ...user,
-        purchasedCourses: [...user.purchasedCourses, courseId],
-      })
+  const updateProfile = async (data: {
+    name?: string;
+    phone?: string;
+    profile_image_url?: string;
+    preferred_language?: string;
+  }): Promise<boolean> => {
+    try {
+      const updatedUser = await apiClient.updateProfile(data);
+      setUser(updatedUser);
+      return true;
+    } catch (error) {
+      console.error("Update profile error:", error);
+      return false;
     }
-  }
+  };
 
-  const hasAccess = (type: "course" | "subscription", id?: string): boolean => {
-    if (!user) return false
-
-    if (type === "subscription") {
-      return user.subscriptionStatus === "active" && user.subscriptionExpiry && user.subscriptionExpiry > new Date()
+  const refreshProfile = async (): Promise<void> => {
+    try {
+      const profile = await apiClient.getProfile();
+      setUser(profile);
+    } catch (error) {
+      console.error("Refresh profile error:", error);
     }
+  };
 
-    if (type === "course" && id) {
-      return user.purchasedCourses.includes(id)
-    }
+  const hasPurchasedCourse = (courseId: string): boolean => {
+    if (!user) return false;
+    return user.course_purchases.some(
+      (purchase) =>
+        purchase.course?.id === courseId &&
+        purchase.payment_status === "completed",
+    );
+  };
 
-    return false
-  }
+  const hasPurchasedWorkbook = (workbookId: string): boolean => {
+    if (!user) return false;
+    return user.workbook_purchases.some(
+      (purchase) =>
+        purchase.workbook?.id === workbookId &&
+        purchase.payment_status === "completed",
+    );
+  };
 
   return (
     <AuthContext.Provider
@@ -160,20 +175,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
         login,
         register,
         logout,
-        updateSubscription,
-        addPurchasedCourse,
-        hasAccess,
+        updateProfile,
+        refreshProfile,
+        hasPurchasedCourse,
+        hasPurchasedWorkbook,
       }}
     >
       {children}
     </AuthContext.Provider>
-  )
+  );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
+    throw new Error("useAuth must be used within an AuthProvider");
   }
-  return context
+  return context;
 }
