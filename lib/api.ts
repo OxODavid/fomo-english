@@ -29,9 +29,13 @@ class ApiClient {
       (response: AxiosResponse) => response,
       (error) => {
         if (error.response?.status === 401) {
+          console.log("🚫 401 Unauthorized - redirecting to home");
           this.removeToken();
           if (typeof window !== "undefined") {
-            window.location.href = "/";
+            // Only redirect if not already on admin login page
+            if (!window.location.pathname.includes("/admin/login")) {
+              window.location.href = "/";
+            }
           }
         }
         return Promise.reject(error);
@@ -435,6 +439,144 @@ class ApiClient {
       url: "/api/admin/courses",
       method: "GET",
       params,
+    });
+  }
+
+  async createCourse(data: {
+    title_en: string;
+    title_vi: string;
+    description_en: string;
+    description_vi: string;
+    price_usd: number;
+    price_vnd: number;
+    original_price_usd?: number;
+    original_price_vnd?: number;
+    level: string;
+    category: string;
+    duration_hours: number;
+    total_videos: number;
+    instructor_id?: string;
+    image_url?: string;
+    is_lifetime_access?: boolean;
+    is_active?: boolean;
+  }) {
+    return this.request<any>({
+      url: "/api/admin/courses",
+      method: "POST",
+      data,
+    });
+  }
+
+  async updateCourse(
+    id: string,
+    data: {
+      title_en?: string;
+      title_vi?: string;
+      description_en?: string;
+      description_vi?: string;
+      price_usd?: number;
+      price_vnd?: number;
+      original_price_usd?: number;
+      original_price_vnd?: number;
+      level?: string;
+      category?: string;
+      duration_hours?: number;
+      total_videos?: number;
+      instructor_id?: string;
+      image_url?: string;
+      is_lifetime_access?: boolean;
+      is_active?: boolean;
+    },
+  ) {
+    return this.request<any>({
+      url: `/api/admin/courses/${id}`,
+      method: "PUT",
+      data,
+    });
+  }
+
+  async deleteCourse(id: string) {
+    return this.request<any>({
+      url: `/api/admin/courses/${id}`,
+      method: "DELETE",
+    });
+  }
+
+  async getAdminWorkbooks(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  }) {
+    return this.request<{
+      data: any[];
+      meta: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      };
+    }>({
+      url: "/api/admin/workbooks",
+      method: "GET",
+      params,
+    });
+  }
+
+  async createWorkbook(data: {
+    title_en: string;
+    title_vi: string;
+    description_en: string;
+    description_vi: string;
+    price_usd?: number;
+    price_vnd?: number;
+    original_price_usd?: number;
+    original_price_vnd?: number;
+    level: string;
+    category: string;
+    pages: number;
+    pdf_url: string;
+    cover_image_url?: string;
+    is_free?: boolean;
+    is_active?: boolean;
+  }) {
+    return this.request<any>({
+      url: "/api/admin/workbooks",
+      method: "POST",
+      data,
+    });
+  }
+
+  async updateWorkbook(
+    id: string,
+    data: {
+      title_en?: string;
+      title_vi?: string;
+      description_en?: string;
+      description_vi?: string;
+      price_usd?: number;
+      price_vnd?: number;
+      original_price_usd?: number;
+      original_price_vnd?: number;
+      level?: string;
+      category?: string;
+      pages?: number;
+      pdf_url?: string;
+      cover_image_url?: string;
+      is_free?: boolean;
+      is_active?: boolean;
+    },
+  ) {
+    return this.request<any>({
+      url: `/api/admin/workbooks/${id}`,
+      method: "PUT",
+      data,
+    });
+  }
+
+  async deleteWorkbook(id: string) {
+    return this.request<any>({
+      url: `/api/admin/workbooks/${id}`,
+      method: "DELETE",
     });
   }
 }

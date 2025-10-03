@@ -26,7 +26,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { CourseForm } from "@/components/admin/course-form";
+import { WorkbookForm } from "@/components/admin/workbook-form";
 import { Badge } from "@/components/ui/badge";
 import { apiClient } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -36,209 +36,120 @@ import {
   Edit,
   Trash2,
   Eye,
-  BookOpen,
+  FileText,
   DollarSign,
-  Clock,
-  Users,
+  Download,
+  BookOpen,
 } from "lucide-react";
 import Link from "next/link";
 
-interface Course {
+interface Workbook {
   id: string;
   title_en: string;
   title_vi: string;
   description_en: string;
   description_vi?: string;
-  price_usd: number;
-  price_vnd: number;
+  price_usd?: number;
+  price_vnd?: number;
   original_price_usd?: number;
   original_price_vnd?: number;
   level: string;
   category: string;
-  duration_hours: number;
-  total_videos: number;
-  instructor?: {
-    id: string;
-    name: string;
-  };
-  instructor_id?: string;
-  image_url?: string;
-  is_lifetime_access?: boolean;
+  pages: number;
+  pdf_url?: string;
+  cover_image_url?: string;
+  is_free: boolean;
   is_active: boolean;
   created_at: string;
 }
 
-export default function AdminCoursesPage() {
-  const [courses, setCourses] = useState<Course[]>([]);
+export default function AdminWorkbooksPage() {
+  const [workbooks, setWorkbooks] = useState<Workbook[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [editingWorkbook, setEditingWorkbook] = useState<Workbook | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchCourses();
+    fetchWorkbooks();
   }, []);
 
-  const fetchCourses = async () => {
+  const fetchWorkbooks = async () => {
     try {
-      console.log("🔍 Fetching admin courses...");
-      const response = await apiClient.getAdminCourses();
-      console.log("✅ Courses received:", response);
-      setCourses(response.data || []);
+      console.log("🔍 Fetching admin workbooks...");
+      const response = await apiClient.getAdminWorkbooks();
+      console.log("✅ Workbooks received:", response);
+      setWorkbooks(response.data || []);
     } catch (error: any) {
-      console.error("❌ Failed to fetch courses:", error);
-
-      // Mock data for development
-      console.log("🔄 Using mock courses data");
-      setCourses([
-        {
-          id: "1",
-          title_en: "Complete Business English Mastery",
-          title_vi: "Thành thạo hoàn toàn tiếng Anh thương mại",
-          description_en:
-            "Comprehensive course covering all aspects of business communication",
-          description_vi:
-            "Khóa học toàn diện bao gồm tất cả các khía cạnh của giao tiếp thương mại",
-          price_usd: 149,
-          price_vnd: 3599000,
-          original_price_usd: 199,
-          original_price_vnd: 4799000,
-          level: "intermediate",
-          category: "business",
-          duration_hours: 12,
-          total_videos: 48,
-          instructor: {
-            id: "1",
-            name: "Sarah Johnson",
-          },
-          instructor_id: "1",
-          image_url: "/placeholder.jpg",
-          is_lifetime_access: true,
-          is_active: true,
-          created_at: "2024-01-01T00:00:00.000Z",
-        },
-        {
-          id: "2",
-          title_en: "Technical English for Software Engineers",
-          title_vi: "Tiếng Anh kỹ thuật cho kỹ sư phần mềm",
-          description_en:
-            "Master technical communication skills for software development",
-          description_vi:
-            "Thành thạo kỹ năng giao tiếp kỹ thuật cho phát triển phần mềm",
-          price_usd: 179,
-          price_vnd: 4299000,
-          original_price_usd: 229,
-          original_price_vnd: 5499000,
-          level: "advanced",
-          category: "technology",
-          duration_hours: 15,
-          total_videos: 52,
-          instructor: {
-            id: "2",
-            name: "Michael Chen",
-          },
-          instructor_id: "2",
-          image_url: "/professional-man-teacher-technology.jpg",
-          is_lifetime_access: true,
-          is_active: true,
-          created_at: "2024-01-02T00:00:00.000Z",
-        },
-        {
-          id: "3",
-          title_en: "Medical English for Healthcare Professionals",
-          title_vi: "Tiếng Anh y khoa cho chuyên gia y tế",
-          description_en:
-            "Comprehensive medical English course for healthcare professionals",
-          description_vi:
-            "Khóa học tiếng Anh y khoa toàn diện cho chuyên gia y tế",
-          price_usd: 159,
-          price_vnd: 3799000,
-          original_price_usd: 199,
-          original_price_vnd: 4799000,
-          level: "intermediate",
-          category: "healthcare",
-          duration_hours: 14,
-          total_videos: 45,
-          instructor: {
-            id: "3",
-            name: "Dr. Emily Rodriguez",
-          },
-          instructor_id: "3",
-          image_url: "/professional-woman-doctor-teacher.jpg",
-          is_lifetime_access: true,
-          is_active: true,
-          created_at: "2024-01-03T00:00:00.000Z",
-        },
-      ]);
-
+      console.error("❌ Failed to fetch workbooks:", error);
       toast({
-        title: "Warning",
-        description: "Using mock data - backend API not available",
-        variant: "default",
+        title: "Error",
+        description: "Failed to load workbooks. Please try again later.",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDeleteCourse = async (courseId: string) => {
-    if (!confirm("Are you sure you want to delete this course?")) return;
+  const handleDeleteWorkbook = async (workbookId: string) => {
+    if (!confirm("Are you sure you want to delete this workbook?")) return;
 
     try {
-      await apiClient.deleteCourse(courseId);
-      setCourses(courses.filter((course) => course.id !== courseId));
+      await apiClient.deleteWorkbook(workbookId);
+      setWorkbooks(workbooks.filter((workbook) => workbook.id !== workbookId));
       toast({
         title: "Success",
-        description: "Course deleted successfully",
+        description: "Workbook deleted successfully",
       });
     } catch (error: any) {
-      console.error("Failed to delete course:", error);
+      console.error("Failed to delete workbook:", error);
       toast({
         title: "Error",
-        description: "Failed to delete course",
+        description: "Failed to delete workbook",
         variant: "destructive",
       });
     }
   };
 
-  const handleSaveCourse = async (courseData: any) => {
+  const handleSaveWorkbook = async (workbookData: any) => {
     setIsSubmitting(true);
     try {
-      if (editingCourse) {
-        // Update existing course
-        const updatedCourse = await apiClient.updateCourse(
-          editingCourse.id,
-          courseData,
+      if (editingWorkbook) {
+        // Update existing workbook
+        const updatedWorkbook = await apiClient.updateWorkbook(
+          editingWorkbook.id,
+          workbookData,
         );
-        setCourses(
-          courses.map((course) =>
-            course.id === editingCourse.id
-              ? { ...course, ...updatedCourse }
-              : course,
+        setWorkbooks(
+          workbooks.map((workbook) =>
+            workbook.id === editingWorkbook.id
+              ? { ...workbook, ...updatedWorkbook }
+              : workbook,
           ),
         );
-        setEditingCourse(null);
+        setEditingWorkbook(null);
         toast({
           title: "Success",
-          description: "Course updated successfully",
+          description: "Workbook updated successfully",
         });
       } else {
-        // Create new course
-        const newCourse = await apiClient.createCourse(courseData);
-        setCourses([newCourse, ...courses]);
+        // Create new workbook
+        const newWorkbook = await apiClient.createWorkbook(workbookData);
+        setWorkbooks([newWorkbook, ...workbooks]);
         setIsCreateDialogOpen(false);
         toast({
           title: "Success",
-          description: "Course created successfully",
+          description: "Workbook created successfully",
         });
       }
     } catch (error: any) {
-      console.error("Failed to save course:", error);
+      console.error("Failed to save workbook:", error);
       toast({
         title: "Error",
-        description: "Failed to save course",
+        description: "Failed to save workbook",
         variant: "destructive",
       });
     } finally {
@@ -246,11 +157,11 @@ export default function AdminCoursesPage() {
     }
   };
 
-  const filteredCourses = courses.filter(
-    (course) =>
-      course.title_en.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.title_vi.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.category.toLowerCase().includes(searchQuery.toLowerCase()),
+  const filteredWorkbooks = workbooks.filter(
+    (workbook) =>
+      workbook.title_en.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      workbook.title_vi.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      workbook.category.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const formatCurrency = (amount: number, currency: "USD" | "VND") => {
@@ -275,6 +186,8 @@ export default function AdminCoursesPage() {
         return "bg-yellow-100 text-yellow-800";
       case "advanced":
         return "bg-red-100 text-red-800";
+      case "all_levels":
+        return "bg-blue-100 text-blue-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -299,9 +212,9 @@ export default function AdminCoursesPage() {
     return (
       <div className="p-6">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">Course Management</h1>
+          <h1 className="text-3xl font-bold">Workbook Management</h1>
           <p className="text-muted-foreground">
-            Manage all courses in the platform
+            Manage all workbooks in the platform
           </p>
         </div>
         <div className="space-y-4">
@@ -323,9 +236,9 @@ export default function AdminCoursesPage() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Course Management</h1>
+            <h1 className="text-3xl font-bold">Workbook Management</h1>
             <p className="text-muted-foreground">
-              Manage all courses in the platform
+              Manage all workbooks in the platform
             </p>
           </div>
           <Dialog
@@ -335,18 +248,18 @@ export default function AdminCoursesPage() {
             <DialogTrigger asChild>
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
-                Create Course
+                Create Workbook
               </Button>
             </DialogTrigger>
             <DialogContent className="w-[90vw] max-w-none max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Create New Course</DialogTitle>
+                <DialogTitle>Create New Workbook</DialogTitle>
                 <DialogDescription>
-                  Fill in the details to create a new course
+                  Fill in the details to create a new workbook
                 </DialogDescription>
               </DialogHeader>
-              <CourseForm
-                onSave={handleSaveCourse}
+              <WorkbookForm
+                onSave={handleSaveWorkbook}
                 onCancel={() => setIsCreateDialogOpen(false)}
                 isLoading={isSubmitting}
               />
@@ -362,7 +275,7 @@ export default function AdminCoursesPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search courses..."
+                placeholder="Search workbooks..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -373,12 +286,12 @@ export default function AdminCoursesPage() {
         </CardContent>
       </Card>
 
-      {/* Courses Table */}
+      {/* Workbooks Table */}
       <Card>
         <CardHeader>
-          <CardTitle>All Courses ({filteredCourses.length})</CardTitle>
+          <CardTitle>All Workbooks ({filteredWorkbooks.length})</CardTitle>
           <CardDescription>
-            Manage and monitor all courses in your platform
+            Manage and monitor all workbooks in your platform
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -386,67 +299,72 @@ export default function AdminCoursesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Course</TableHead>
+                  <TableHead>Workbook</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Level</TableHead>
                   <TableHead>Price</TableHead>
-                  <TableHead>Duration</TableHead>
-                  <TableHead>Videos</TableHead>
+                  <TableHead>Pages</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCourses.map((course) => (
-                  <TableRow key={course.id}>
+                {filteredWorkbooks.map((workbook) => (
+                  <TableRow key={workbook.id}>
                     <TableCell>
                       <div className="space-y-1">
-                        <div className="font-medium">{course.title_en}</div>
+                        <div className="font-medium">{workbook.title_en}</div>
                         <div className="text-sm text-muted-foreground">
-                          {course.title_vi}
+                          {workbook.title_vi}
                         </div>
                         <div className="text-xs text-muted-foreground line-clamp-2">
-                          {course.description_en}
+                          {workbook.description_en}
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getCategoryBadgeColor(course.category)}>
-                        {course.category}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getLevelBadgeColor(course.level)}>
-                        {course.level}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="font-medium">
-                          {formatCurrency(course.price_usd, "USD")}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {formatCurrency(course.price_vnd, "VND")}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-1">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        <span>{course.duration_hours}h</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-1">
-                        <BookOpen className="h-4 w-4 text-muted-foreground" />
-                        <span>{course.total_videos}</span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <Badge
-                        variant={course.is_active ? "default" : "secondary"}
+                        className={getCategoryBadgeColor(workbook.category)}
                       >
-                        {course.is_active ? "Active" : "Inactive"}
+                        {workbook.category}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getLevelBadgeColor(workbook.level)}>
+                        {workbook.level}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {workbook.is_free ? (
+                        <Badge variant="secondary">Free</Badge>
+                      ) : (
+                        <div className="space-y-1">
+                          <div className="font-medium">
+                            {formatCurrency(workbook.price_usd || 0, "USD")}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {formatCurrency(workbook.price_vnd || 0, "VND")}
+                          </div>
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-1">
+                        <BookOpen className="h-4 w-4 text-muted-foreground" />
+                        <span>{workbook.pages}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={workbook.is_free ? "outline" : "default"}>
+                        {workbook.is_free ? "Free" : "Premium"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={workbook.is_active ? "default" : "secondary"}
+                      >
+                        {workbook.is_active ? "Active" : "Inactive"}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -454,22 +372,27 @@ export default function AdminCoursesPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setEditingCourse(course)}
+                          onClick={() => setEditingWorkbook(workbook)}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDeleteCourse(course.id)}
+                          onClick={() => handleDeleteWorkbook(workbook.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/courses/${course.id}`}>
+                          <Link href={`/workbook/${workbook.id}`}>
                             <Eye className="h-4 w-4" />
                           </Link>
                         </Button>
+                        {!workbook.is_free && (
+                          <Button variant="ghost" size="sm">
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -478,19 +401,19 @@ export default function AdminCoursesPage() {
             </Table>
           </div>
 
-          {filteredCourses.length === 0 && (
+          {filteredWorkbooks.length === 0 && !isLoading && (
             <div className="text-center py-8">
-              <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No courses found</h3>
+              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium mb-2">No workbooks found</h3>
               <p className="text-muted-foreground mb-4">
                 {searchQuery
                   ? "Try adjusting your search criteria"
-                  : "Get started by creating your first course"}
+                  : "Get started by creating your first workbook"}
               </p>
               {!searchQuery && (
                 <Button onClick={() => setIsCreateDialogOpen(true)}>
                   <Plus className="mr-2 h-4 w-4" />
-                  Create Course
+                  Create Workbook
                 </Button>
               )}
             </div>
@@ -498,21 +421,21 @@ export default function AdminCoursesPage() {
         </CardContent>
       </Card>
 
-      {/* Edit Course Dialog */}
-      {editingCourse && (
+      {/* Edit Workbook Dialog */}
+      {editingWorkbook && (
         <Dialog
-          open={!!editingCourse}
-          onOpenChange={() => setEditingCourse(null)}
+          open={!!editingWorkbook}
+          onOpenChange={() => setEditingWorkbook(null)}
         >
           <DialogContent className="w-[90vw] max-w-none max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Edit Course</DialogTitle>
-              <DialogDescription>Update course details</DialogDescription>
+              <DialogTitle>Edit Workbook</DialogTitle>
+              <DialogDescription>Update workbook details</DialogDescription>
             </DialogHeader>
-            <CourseForm
-              course={editingCourse}
-              onSave={handleSaveCourse}
-              onCancel={() => setEditingCourse(null)}
+            <WorkbookForm
+              workbook={editingWorkbook}
+              onSave={handleSaveWorkbook}
+              onCancel={() => setEditingWorkbook(null)}
               isLoading={isSubmitting}
             />
           </DialogContent>

@@ -93,7 +93,10 @@ export function CoursePurchaseModal({
         full_name: formData.full_name || user.name,
         phone: formData.phone || user.phone || "",
         notes: formData.notes,
-        amount: currency === "USD" ? course.price_usd : course.price_vnd,
+        amount:
+          currency === "USD"
+            ? Number(course.price_usd)
+            : Number(course.price_vnd),
         currency: currency,
       };
 
@@ -121,9 +124,12 @@ export function CoursePurchaseModal({
 
   if (!course) return null;
 
-  const price = currency === "USD" ? course.price_usd : course.price_vnd;
+  const price =
+    currency === "USD" ? Number(course.price_usd) : Number(course.price_vnd);
   const originalPrice =
-    currency === "USD" ? course.original_price_usd : course.original_price_vnd;
+    currency === "USD"
+      ? Number(course.original_price_usd || 0)
+      : Number(course.original_price_vnd || 0);
   const hasDiscount = originalPrice && originalPrice > price;
   const discountPercentage = hasDiscount
     ? Math.round(((originalPrice - price) / originalPrice) * 100)
@@ -131,9 +137,9 @@ export function CoursePurchaseModal({
 
   const formatPrice = (amount: number, curr: string) => {
     if (curr === "USD") {
-      return `$${amount.toFixed(2)}`;
+      return `$${Number(amount).toFixed(2)}`;
     }
-    return `${amount.toLocaleString("vi-VN")} VND`;
+    return `${Number(amount).toLocaleString("vi-VN")} VND`;
   };
 
   return (

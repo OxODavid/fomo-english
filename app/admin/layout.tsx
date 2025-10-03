@@ -10,6 +10,7 @@ import {
   CreditCard,
   Users,
   BookOpen,
+  FileText,
   LogOut,
   Menu,
   X,
@@ -32,6 +33,7 @@ function AdminSidebar({
     { name: "Payments", href: "/admin/payments", icon: CreditCard },
     { name: "Users", href: "/admin/users", icon: Users },
     { name: "Courses", href: "/admin/courses", icon: BookOpen },
+    { name: "Workbooks", href: "/admin/workbooks", icon: FileText },
   ];
 
   return (

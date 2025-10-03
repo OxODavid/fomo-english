@@ -36,14 +36,33 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
+        console.log("🔍 Fetching admin dashboard stats...");
         const data = await apiClient.getAdminDashboardStats();
+        console.log("✅ Dashboard stats received:", data);
         setStats(data);
       } catch (error: any) {
-        console.error("Failed to fetch dashboard stats:", error);
+        console.error("❌ Failed to fetch dashboard stats:", error);
+        console.error("Error details:", {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status,
+        });
+
+        // Use mock data as fallback for development
+        console.log("🔄 Using mock data as fallback");
+        setStats({
+          totalUsers: 1250,
+          totalCourses: 8,
+          totalPaymentRequests: 45,
+          pendingPayments: 12,
+          completedPayments: 33,
+          totalRevenue: 125000000, // VND
+        });
+
         toast({
-          title: "Error",
-          description: "Failed to load dashboard statistics",
-          variant: "destructive",
+          title: "Warning",
+          description: "Using mock data - backend API not available",
+          variant: "default",
         });
       } finally {
         setIsLoading(false);

@@ -55,9 +55,9 @@ export function CourseCard({ course, locale = "en" }: CourseCardProps) {
 
   const formatPrice = (usd: number, vnd: number) => {
     if (locale === "vi") {
-      return `${vnd.toLocaleString("vi-VN")} VND`;
+      return `${Number(vnd).toLocaleString("vi-VN")} VND`;
     }
-    return `$${usd.toFixed(2)}`;
+    return `$${Number(usd).toFixed(2)}`;
   };
 
   const handlePurchaseClick = () => {
@@ -154,13 +154,16 @@ export function CourseCard({ course, locale = "en" }: CourseCardProps) {
             <div className="space-y-1">
               <div className="flex items-center space-x-2">
                 <span className="text-2xl font-bold text-primary">
-                  {formatPrice(course.price_usd, course.price_vnd)}
+                  {formatPrice(
+                    Number(course.price_usd),
+                    Number(course.price_vnd),
+                  )}
                 </span>
                 {(course.original_price_usd || course.original_price_vnd) && (
                   <span className="text-sm text-muted-foreground line-through">
                     {formatPrice(
-                      course.original_price_usd || course.price_usd,
-                      course.original_price_vnd || course.price_vnd,
+                      Number(course.original_price_usd || course.price_usd),
+                      Number(course.original_price_vnd || course.price_vnd),
                     )}
                   </span>
                 )}

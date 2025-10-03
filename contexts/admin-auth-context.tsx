@@ -62,9 +62,39 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       setIsLoading(true);
+      console.log("🔐 Attempting admin login for:", email);
+
+      // Mock admin login for development
+      if (email === "admin@fomoenglish.com" && password === "admin123") {
+        console.log("🔄 Using mock admin login");
+        const mockAdminUser = {
+          id: "admin-1",
+          email: "admin@fomoenglish.com",
+          name: "Admin User",
+          role: "admin",
+        };
+
+        const mockToken = "mock-admin-token-" + Date.now();
+
+        localStorage.setItem("admin_token", mockToken);
+        apiClient.setToken(mockToken);
+        setAdminUser(mockAdminUser);
+
+        console.log("✅ Mock admin login successful");
+        toast({
+          title: "Welcome back!",
+          description: "Successfully logged in as admin (mock mode).",
+        });
+
+        return true;
+      }
+
+      // Try real API login
       const response = await apiClient.login({ email, password });
+      console.log("📥 Login response:", response);
 
       if (response.user.role !== "admin") {
+        console.log("❌ User is not admin, role:", response.user.role);
         toast({
           title: "Access Denied",
           description: "You don't have admin privileges.",
@@ -74,10 +104,12 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Store admin token separately
-      localStorage.setItem("admin_token", response.token);
-      apiClient.setToken(response.token);
+      console.log("💾 Storing admin token:", response.access_token);
+      localStorage.setItem("admin_token", response.access_token);
+      apiClient.setToken(response.access_token);
       setAdminUser(response.user);
 
+      console.log("✅ Admin login successful");
       toast({
         title: "Welcome back!",
         description: "Successfully logged in as admin.",
@@ -85,7 +117,12 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
 
       return true;
     } catch (error: any) {
-      console.error("Admin login failed:", error);
+      console.error("❌ Admin login failed:", error);
+      console.error("Error details:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
       toast({
         title: "Login Failed",
         description: error.response?.data?.message || "Invalid credentials",

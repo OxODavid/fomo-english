@@ -13,7 +13,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Filter, Play, Users, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Search,
+  Filter,
+  Play,
+  Users,
+  Clock,
+  Plus,
+  BookOpen,
+} from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 import { apiClient } from "@/lib/api";
 
@@ -32,6 +41,8 @@ export default function CoursesPage() {
     const fetchCourses = async () => {
       try {
         setLoading(true);
+        console.log("🔍 Fetching courses...");
+
         const params = {
           page,
           limit: 12,
@@ -40,17 +51,31 @@ export default function CoursesPage() {
           ...(searchQuery && { search: searchQuery }),
         };
 
+        console.log("📋 API params:", params);
         const response = await apiClient.getCourses(params);
-        setCourses(response.data);
-        setTotalPages(response.meta.totalPages);
+        console.log("✅ Courses response:", response);
+
+        setCourses(response.data || []);
+        setTotalPages(response.meta?.totalPages || 0);
       } catch (error) {
-        console.error("Error fetching courses:", error);
+        console.error("❌ Error fetching courses:", error);
+        setCourses([]);
+        setTotalPages(0);
       } finally {
+        console.log("🏁 Loading finished");
         setLoading(false);
       }
     };
 
-    fetchCourses();
+    // Add timeout fallback
+    const timeoutId = setTimeout(() => {
+      console.log("⏰ API timeout, stopping loading");
+      setLoading(false);
+    }, 10000); // 10 second timeout
+
+    fetchCourses().finally(() => {
+      clearTimeout(timeoutId);
+    });
   }, [page, selectedCategory, selectedLevel, searchQuery]);
 
   const categories = [
@@ -80,13 +105,10 @@ export default function CoursesPage() {
     { value: "advanced", label: locale === "en" ? "Advanced" : "Nâng cao" },
   ];
 
-  // Debounce search query
+  // Reset page when filters change
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setPage(1); // Reset to first page when filters change
-    }, 300);
-
-    return () => clearTimeout(timer);
+    console.log("🔄 Filters changed, resetting page to 1");
+    setPage(1); // Reset to first page when filters change
   }, [searchQuery, selectedCategory, selectedLevel]);
 
   return (
@@ -227,13 +249,37 @@ export default function CoursesPage() {
                   ))}
                 </div>
 
-                {courses.length === 0 && (
+                {courses.length === 0 && !loading && (
                   <div className="text-center py-12">
-                    <p className="text-muted-foreground">
+                    <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium mb-2">
                       {locale === "en"
-                        ? "No courses found matching your criteria."
-                        : "Không tìm thấy khóa học phù hợp."}
+                        ? "No courses found"
+                        : "Không tìm thấy khóa học"}
+                    </h3>
+                    <p className="text-muted-foreground mb-4">
+                      {searchQuery ||
+                      selectedCategory !== "all" ||
+                      selectedLevel !== "all"
+                        ? locale === "en"
+                          ? "Try adjusting your search criteria"
+                          : "Thử điều chỉnh tiêu chí tìm kiếm"
+                        : locale === "en"
+                        ? "Get started by creating your first course"
+                        : "Bắt đầu bằng cách tạo khóa học đầu tiên"}
                     </p>
+                    {!searchQuery &&
+                      selectedCategory === "all" &&
+                      selectedLevel === "all" && (
+                        <Button
+                          onClick={() =>
+                            (window.location.href = "/admin/courses")
+                          }
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          {locale === "en" ? "Create Course" : "Tạo khóa học"}
+                        </Button>
+                      )}
                   </div>
                 )}
               </>
