@@ -24,6 +24,8 @@ import { useAuth } from "@/contexts/auth-context";
 import { useLanguage } from "@/contexts/language-context";
 import { apiClient } from "@/lib/api";
 import { CoursePurchaseModal } from "@/components/courses/course-purchase-modal";
+import { YouTubePlayer } from "@/components/video/youtube-player";
+import { LoginModal } from "@/components/auth/login-modal";
 import Link from "next/link";
 
 interface Course {
@@ -73,6 +75,16 @@ interface Course {
       is_completed?: boolean;
     }>;
   }>;
+  reviews?: Array<{
+    id: string;
+    rating: number;
+    comment_en: string;
+    comment_vi?: string;
+    user: {
+      name: string;
+    };
+    created_at: string;
+  }>;
   isPurchased?: boolean;
   progress?: {
     completed_videos: number;
@@ -93,6 +105,8 @@ export default function CourseDetailPage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [progress, setProgress] = useState<any>(null);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [previewVideo, setPreviewVideo] = useState<any>(null);
 
   useEffect(() => {
     fetchCourseDetails();
@@ -318,7 +332,7 @@ export default function CourseDetailPage() {
 
             {/* Course Content Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="overview">
                   {locale === "vi" ? "Tổng quan" : "Overview"}
                 </TabsTrigger>
@@ -327,6 +341,9 @@ export default function CourseDetailPage() {
                 </TabsTrigger>
                 <TabsTrigger value="instructor">
                   {locale === "vi" ? "Giảng viên" : "Instructor"}
+                </TabsTrigger>
+                <TabsTrigger value="reviews">
+                  {locale === "vi" ? "Đánh giá" : "Reviews"}
                 </TabsTrigger>
               </TabsList>
 
@@ -419,7 +436,11 @@ export default function CourseDetailPage() {
                                     {video.is_completed && (
                                       <CheckCircle className="h-5 w-5 text-green-600" />
                                     )}
-                                    <Button size="sm" variant="outline">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => setPreviewVideo(video)}
+                                    >
                                       <Play className="h-4 w-4 mr-2" />
                                       {locale === "vi" ? "Xem" : "Watch"}
                                     </Button>
@@ -477,6 +498,69 @@ export default function CourseDetailPage() {
                   </CardContent>
                 </Card>
               </TabsContent>
+
+              <TabsContent value="reviews" className="space-y-6">
+                {course.reviews && course.reviews.length > 0 ? (
+                  <div className="space-y-4">
+                    {course.reviews.map((review) => (
+                      <Card key={review.id}>
+                        <CardContent className="pt-6">
+                          <div className="flex items-start gap-4">
+                            <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center text-sm font-medium">
+                              {review.user.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h4 className="font-medium">
+                                  {review.user.name}
+                                </h4>
+                                <div className="flex items-center gap-1">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`h-4 w-4 ${
+                                        i < review.rating
+                                          ? "text-yellow-400 fill-current"
+                                          : "text-gray-300"
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                              <p className="text-gray-700 mb-2">
+                                {locale === "vi"
+                                  ? review.comment_vi
+                                  : review.comment_en}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {new Date(
+                                  review.created_at,
+                                ).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <Card>
+                    <CardContent className="text-center py-8">
+                      <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium mb-2">
+                        {locale === "vi"
+                          ? "Chưa có đánh giá nào"
+                          : "No reviews yet"}
+                      </h3>
+                      <p className="text-gray-600">
+                        {locale === "vi"
+                          ? "Hãy là người đầu tiên đánh giá khóa học này"
+                          : "Be the first to review this course"}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
             </Tabs>
           </div>
 
@@ -527,7 +611,13 @@ export default function CourseDetailPage() {
                     <Button
                       className="w-full"
                       size="lg"
-                      onClick={() => setShowPurchaseModal(true)}
+                      onClick={() => {
+                        if (!user) {
+                          setShowLoginModal(true);
+                          return;
+                        }
+                        setShowPurchaseModal(true);
+                      }}
                     >
                       <BookOpen className="mr-2 h-4 w-4" />
                       {locale === "vi" ? "Mua khóa học" : "Purchase Course"}
@@ -587,6 +677,53 @@ export default function CourseDetailPage() {
           }}
         />
       )}
+
+      {/* Video Preview Modal */}
+      {previewVideo && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="p-4 border-b flex items-center justify-between">
+              <h3 className="text-lg font-semibold">
+                {locale === "vi"
+                  ? previewVideo.title_vi
+                  : previewVideo.title_en}
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPreviewVideo(null)}
+              >
+                ✕
+              </Button>
+            </div>
+            <div className="p-4">
+              <YouTubePlayer
+                videoUrl={previewVideo.video_url}
+                title={
+                  locale === "vi"
+                    ? previewVideo.title_vi
+                    : previewVideo.title_en
+                }
+              />
+              {previewVideo.description_en && (
+                <div className="mt-4">
+                  <p className="text-gray-600">
+                    {locale === "vi"
+                      ? previewVideo.description_vi
+                      : previewVideo.description_en}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+      />
     </div>
   );
 }

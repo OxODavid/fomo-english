@@ -137,9 +137,10 @@ export function UserDashboard() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="courses">My Courses</TabsTrigger>
+          <TabsTrigger value="workbooks">My Workbooks</TabsTrigger>
           <TabsTrigger value="schedule">Live Classes</TabsTrigger>
           <TabsTrigger value="community">Community</TabsTrigger>
         </TabsList>
@@ -309,6 +310,29 @@ export function UserDashboard() {
                   </Button>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="workbooks" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>My Workbooks</CardTitle>
+              <CardDescription>
+                Download and access your purchased workbooks
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8">
+                <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">No workbooks yet</h3>
+                <p className="text-muted-foreground mb-4">
+                  Purchase workbooks to enhance your learning
+                </p>
+                <Button asChild>
+                  <a href="/workbook">Browse Workbooks</a>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

@@ -21,6 +21,7 @@ import {
 import { useAuth } from "@/contexts/auth-context";
 import { useLanguage } from "@/contexts/language-context";
 import { apiClient } from "@/lib/api";
+import { YouTubePlayer } from "@/components/video/youtube-player";
 import Link from "next/link";
 
 interface Video {
@@ -54,7 +55,7 @@ interface Course {
   description_en: string;
   description_vi?: string;
   total_videos: number;
-  sections: Section[];
+  sections?: Section[];
 }
 
 export default function CourseLearningPage() {
@@ -231,23 +232,24 @@ export default function CourseLearningPage() {
                 </Card>
               )}
 
-              {/* Video Player Placeholder */}
+              {/* Video Player */}
               {selectedVideo ? (
                 <Card className="mb-6">
                   <CardContent className="p-0">
-                    <div className="aspect-video bg-black rounded-t-lg flex items-center justify-center">
-                      <div className="text-center text-white">
-                        <Play className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                        <p className="text-lg">
-                          {locale === "vi" ? "Video Player" : "Video Player"}
-                        </p>
-                        <p className="text-sm opacity-75">
-                          {locale === "vi"
-                            ? "Tích hợp video player tại đây"
-                            : "Video player integration here"}
-                        </p>
-                      </div>
-                    </div>
+                    <YouTubePlayer
+                      videoUrl={selectedVideo.video_url}
+                      title={
+                        locale === "vi"
+                          ? selectedVideo.title_vi
+                          : selectedVideo.title_en
+                      }
+                      onVideoEnd={() => {
+                        // Auto-mark as complete when video ends
+                        if (!completedVideos.has(selectedVideo.id)) {
+                          markVideoComplete(selectedVideo.id);
+                        }
+                      }}
+                    />
                     <div className="p-6">
                       <h2 className="text-xl font-semibold mb-2">
                         {locale === "vi"

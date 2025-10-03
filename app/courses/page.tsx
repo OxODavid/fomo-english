@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { CourseCard } from "@/components/courses/course-card";
+import { LoginModal } from "@/components/auth/login-modal";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -35,6 +36,7 @@ export default function CoursesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedLevel, setSelectedLevel] = useState("all");
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -247,6 +249,7 @@ export default function CoursesPage() {
                       key={course.id}
                       course={course}
                       locale={locale}
+                      onShowLogin={() => setShowLoginModal(true)}
                     />
                   ))}
                 </div>
@@ -290,6 +293,12 @@ export default function CoursesPage() {
         </section>
       </main>
       <Footer />
+
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+      />
     </div>
   );
 }

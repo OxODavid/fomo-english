@@ -14,6 +14,7 @@ import {
   LogOut,
   Trophy,
   BookOpen,
+  FileText,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
 import { useAuth } from "@/contexts/auth-context";
@@ -48,9 +49,18 @@ export function Header() {
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="h-8 w-8 rounded-lg primary-gradient flex items-center justify-center">
-                <span className="text-white font-bold text-lg">F</span>
+            <Link href="/" className="flex items-center space-x-3">
+              <div className="h-10 w-10 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
+                <img
+                  src="/logo.svg"
+                  alt="FOMO English Logo"
+                  className="h-full w-full object-cover dark:hidden"
+                />
+                <img
+                  src="/logo-dark.svg"
+                  alt="FOMO English Logo"
+                  className="h-full w-full object-cover hidden dark:block"
+                />
               </div>
               <span className="text-xl font-bold text-gradient">
                 FOMO English
@@ -151,6 +161,15 @@ export function Header() {
                           <BookOpen className="mr-2 h-4 w-4" />
                           {locale === "en" ? "My Courses" : "Khóa học của tôi"}
                         </Link>
+                        <Link
+                          href="/my-workbooks"
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          <FileText className="mr-2 h-4 w-4" />
+                          {locale === "en"
+                            ? "My Workbooks"
+                            : "Sách bài tập của tôi"}
+                        </Link>
                       </div>
 
                       <div className="border-t border-gray-200 dark:border-gray-700 py-1">
@@ -177,18 +196,34 @@ export function Header() {
             </div>
 
             {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="md:hidden"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              {isMenuOpen ? (
-                <X className="h-5 w-5" />
-              ) : (
-                <Menu className="h-5 w-5" />
-              )}
-            </Button>
+            <div className="md:hidden flex items-center space-x-2">
+              <Link href="/" className="flex items-center space-x-2">
+                <div className="h-8 w-8 rounded-lg overflow-hidden shadow-md">
+                  <img
+                    src="/logo-mobile.svg"
+                    alt="FOMO English Logo"
+                    className="h-full w-full object-cover dark:hidden"
+                  />
+                  <img
+                    src="/logo-dark.svg"
+                    alt="FOMO English Logo"
+                    className="h-full w-full object-cover hidden dark:block"
+                  />
+                </div>
+                <span className="text-lg font-bold text-gradient">FOMO</span>
+              </Link>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+              >
+                {isMenuOpen ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <Menu className="h-5 w-5" />
+                )}
+              </Button>
+            </div>
           </div>
 
           {/* Mobile Navigation */}

@@ -109,11 +109,37 @@ http://localhost:3001
 
 ### Authentication
 
-All protected endpoints require a Bearer token in the Authorization header:
+The API supports both authenticated and unauthenticated access:
+
+**Protected Endpoints** (require authentication):
+
+- User profile management
+- Course purchases
+- Progress tracking
+- Video completion
+- Workbook purchases
+- Workbook downloads
+
+**Optional Authentication Endpoints** (work with or without authentication):
+
+- Get all courses (`GET /api/courses`)
+- Get course details (`GET /api/courses/:id`)
+- Get all workbooks (`GET /api/workbooks`)
+- Get workbook details (`GET /api/workbooks/:id`)
+
+**Unauthenticated Endpoints**:
+
+- User registration
+- User login
+- Free resources
+
+For protected endpoints, include the Bearer token in the Authorization header:
 
 ```
 Authorization: Bearer <your-jwt-token>
 ```
+
+For optional authentication endpoints, the token is optional but recommended for personalized content.
 
 ---
 
@@ -245,7 +271,7 @@ POST /api/auth/logout
 GET /api/courses
 ```
 
-**Headers:** `Authorization: Bearer <user-token>` (optional - for purchase status)
+**Headers:** `Authorization: Bearer <user-token>` (optional - for purchase status and user context)
 
 **Query Parameters:**
 
@@ -354,6 +380,8 @@ GET /api/courses/my-courses
 GET /api/courses/:id
 ```
 
+**Headers:** `Authorization: Bearer <user-token>` (optional - for purchase status)
+
 **Response:**
 
 ```json
@@ -362,20 +390,104 @@ GET /api/courses/:id
   "title_en": "Business English Fundamentals",
   "title_vi": "Tiếng Anh Kinh Doanh Cơ Bản",
   "description_en": "Master essential business English skills",
-  "price_usd": 99.00,
+  "price_usd": 99.0,
   "price_vnd": 2399000,
   "level": "intermediate",
   "category": "business",
   "duration_hours": 20,
   "total_videos": 15,
-  "instructor": {...},
-  "features": [...],
-  "sections": [...],
-  "reviews": [...],
+  "instructor": {
+    "id": "uuid",
+    "name": "Jane Smith",
+    "bio_en": "Expert in business English"
+  },
+  "features": [
+    {
+      "feature_en": "Lifetime access",
+      "feature_vi": "Truy cập trọn đời"
+    }
+  ],
+  "sections": [
+    {
+      "id": "uuid",
+      "title_en": "Introduction to Business Communication",
+      "title_vi": "Giới thiệu về Giao tiếp Kinh doanh",
+      "description_en": "Learn the basics of business communication",
+      "description_vi": "Học những điều cơ bản về giao tiếp kinh doanh",
+      "sort_order": 1,
+      "videos": [
+        {
+          "id": "uuid",
+          "title_en": "Business Communication Basics",
+          "title_vi": "Cơ bản về Giao tiếp Kinh doanh",
+          "description_en": "Learn the fundamentals of business communication",
+          "description_vi": "Học những điều cơ bản về giao tiếp kinh doanh",
+          "video_url": "https://youtube.com/watch?v=example1",
+          "quiz_url": "https://quizlet.com/quiz1",
+          "duration_minutes": 15,
+          "points_reward": 10,
+          "sort_order": 1
+        },
+        {
+          "id": "uuid",
+          "title_en": "Email Writing Skills",
+          "title_vi": "Kỹ năng Viết Email",
+          "description_en": "Master professional email writing",
+          "description_vi": "Làm chủ kỹ năng viết email chuyên nghiệp",
+          "video_url": "https://youtube.com/watch?v=example2",
+          "quiz_url": "https://quizlet.com/quiz2",
+          "duration_minutes": 20,
+          "points_reward": 12,
+          "sort_order": 2
+        }
+      ]
+    },
+    {
+      "id": "uuid",
+      "title_en": "Advanced Communication",
+      "title_vi": "Giao tiếp Nâng cao",
+      "description_en": "Advanced business communication techniques",
+      "description_vi": "Các kỹ thuật giao tiếp kinh doanh nâng cao",
+      "sort_order": 2,
+      "videos": [
+        {
+          "id": "uuid",
+          "title_en": "Presentation Skills",
+          "title_vi": "Kỹ năng Thuyết trình",
+          "description_en": "Learn effective presentation techniques",
+          "description_vi": "Học các kỹ thuật thuyết trình hiệu quả",
+          "video_url": "https://youtube.com/watch?v=example3",
+          "quiz_url": "https://quizlet.com/quiz3",
+          "duration_minutes": 25,
+          "points_reward": 15,
+          "sort_order": 1
+        }
+      ]
+    }
+  ],
+  "reviews": [
+    {
+      "id": "uuid",
+      "rating": 5,
+      "comment_en": "Excellent course!",
+      "comment_vi": "Khóa học tuyệt vời!",
+      "user": {
+        "name": "John Doe"
+      },
+      "created_at": "2024-01-01T00:00:00.000Z"
+    }
+  ],
   "isPurchased": false,
   "progress": null
 }
 ```
+
+**Note:**
+
+- Sections are ordered by `sort_order` (ascending)
+- Videos within each section are ordered by `sort_order` (ascending)
+- If user is authenticated, `isPurchased` and `progress` fields will be included
+- If user is not authenticated, `isPurchased` will be `false` and `progress` will be `null`
 
 ### Get Course Sections (Protected)
 
@@ -721,6 +833,8 @@ GET /api/points/leaderboard
 GET /api/workbooks
 ```
 
+**Headers:** `Authorization: Bearer <user-token>` (optional - for purchase status and user context)
+
 **Query Parameters:**
 
 - `category` (optional): `business` | `technology` | `healthcare` | `ielts`
@@ -729,6 +843,8 @@ GET /api/workbooks
 - `search` (optional): Search in title and description
 - `page` (optional): Page number (default: 1)
 - `limit` (optional): Items per page (default: 10)
+- `sortBy` (optional): Sort field (default: `created_at`)
+- `sortOrder` (optional): `ASC` | `DESC` (default: `DESC`)
 
 **Response:**
 
@@ -740,6 +856,7 @@ GET /api/workbooks
       "title_en": "Business Vocabulary Workbook",
       "title_vi": "Sách bài tập Từ vựng Kinh doanh",
       "description_en": "Essential business vocabulary exercises",
+      "description_vi": "Bài tập từ vựng kinh doanh thiết yếu",
       "price_usd": 29.99,
       "price_vnd": 699000,
       "level": "intermediate",
@@ -747,10 +864,57 @@ GET /api/workbooks
       "pages": 120,
       "cover_image_url": "https://example.com/workbook-cover.jpg",
       "is_free": false,
-      "features": [...]
+      "features": [
+        {
+          "feature_en": "120 pages of exercises",
+          "feature_vi": "120 trang bài tập"
+        }
+      ],
+      "is_purchased": true,
+      "purchase_date": "2024-01-01T00:00:00.000Z"
     }
   ],
-  "meta": {...}
+  "meta": {
+    "total": 15,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 2
+  }
+}
+```
+
+### Get My Workbooks (Protected)
+
+```http
+GET /api/workbooks/my-workbooks
+```
+
+**Headers:** `Authorization: Bearer <user-token>`
+
+**Response:**
+
+```json
+{
+  "workbooks": [
+    {
+      "id": "uuid",
+      "title_en": "Business Vocabulary Workbook",
+      "title_vi": "Sách bài tập Từ vựng Kinh doanh",
+      "description_en": "Essential business vocabulary exercises",
+      "description_vi": "Bài tập từ vựng kinh doanh thiết yếu",
+      "price_usd": 29.99,
+      "price_vnd": 699000,
+      "level": "intermediate",
+      "category": "business",
+      "pages": 120,
+      "cover_image_url": "https://example.com/workbook-cover.jpg",
+      "is_lifetime_access": true,
+      "purchased_at": "2024-01-01T00:00:00.000Z",
+      "payment_amount": 699000,
+      "payment_currency": "VND"
+    }
+  ],
+  "total": 1
 }
 ```
 
@@ -759,6 +923,8 @@ GET /api/workbooks
 ```http
 GET /api/workbooks/:id
 ```
+
+**Headers:** `Authorization: Bearer <user-token>` (optional - for purchase status)
 
 **Response:**
 
@@ -776,11 +942,38 @@ GET /api/workbooks/:id
   "pages": 120,
   "cover_image_url": "https://example.com/workbook-cover.jpg",
   "is_free": false,
-  "features": [...],
-  "reviews": [...],
-  "isPurchased": false
+  "features": [
+    {
+      "feature_en": "120 pages of exercises",
+      "feature_vi": "120 trang bài tập"
+    }
+  ],
+  "reviews": [
+    {
+      "id": "uuid",
+      "rating": 5,
+      "comment_en": "Great workbook!",
+      "comment_vi": "Sách bài tập tuyệt vời!",
+      "user": {
+        "name": "John Doe"
+      },
+      "created_at": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "isPurchased": true,
+  "purchase": {
+    "id": "uuid",
+    "payment_amount": 699000,
+    "payment_currency": "VND",
+    "purchase_date": "2024-01-01T00:00:00.000Z"
+  }
 }
 ```
+
+**Note:**
+
+- If user is authenticated, `isPurchased` and `purchase` fields will be included
+- If user is not authenticated, `isPurchased` will be `false` and `purchase` will be `null`
 
 ### Purchase Workbook (Protected)
 
@@ -796,8 +989,18 @@ POST /api/workbooks/:id/purchase
 {
   "full_name": "John Doe",
   "phone": "+84123456789",
+  "notes": "Payment via Vietcombank",
   "amount": 699000,
   "currency": "VND"
+}
+```
+
+**Response:**
+
+```json
+{
+  "payment_request_id": "uuid",
+  "message": "Payment request created. Please complete the bank transfer and wait for admin verification."
 }
 ```
 
@@ -817,6 +1020,8 @@ GET /api/workbooks/:id/download
   "expires_at": "2024-01-01T01:00:00.000Z"
 }
 ```
+
+**Note:** Free workbooks can be downloaded without purchase, but paid workbooks require purchase verification.
 
 ---
 
@@ -1769,6 +1974,253 @@ DELETE /api/admin/sections/:id
 ```json
 {
   "message": "Section deleted successfully"
+}
+```
+
+---
+
+## 📖 Admin Workbook Management
+
+### Get All Workbooks (Admin Only)
+
+```http
+GET /api/admin/workbooks
+```
+
+**Headers:** `Authorization: Bearer <admin-token>`
+
+**Query Parameters:**
+
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 20)
+- `search` (optional): Search by title
+
+**Response:**
+
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "title_en": "Business Vocabulary Workbook",
+      "title_vi": "Sách bài tập Từ vựng Kinh doanh",
+      "description_en": "Essential business vocabulary exercises",
+      "description_vi": "Bài tập từ vựng kinh doanh thiết yếu",
+      "price_usd": 29.99,
+      "price_vnd": 699000,
+      "level": "intermediate",
+      "category": "business",
+      "pages": 120,
+      "cover_image_url": "https://example.com/workbook-cover.jpg",
+      "is_free": false,
+      "is_active": true,
+      "created_at": "2024-01-01T00:00:00.000Z",
+      "features": [...],
+      "reviews": [...]
+    }
+  ],
+  "meta": {
+    "total": 15,
+    "page": 1,
+    "limit": 20,
+    "totalPages": 1
+  }
+}
+```
+
+### Get Workbook Details (Admin Only)
+
+```http
+GET /api/admin/workbooks/:id
+```
+
+**Headers:** `Authorization: Bearer <admin-token>`
+
+**Response:**
+
+```json
+{
+  "id": "uuid",
+  "title_en": "Business Vocabulary Workbook",
+  "title_vi": "Sách bài tập Từ vựng Kinh doanh",
+  "description_en": "Essential business vocabulary exercises",
+  "description_vi": "Bài tập từ vựng kinh doanh thiết yếu",
+  "price_usd": 29.99,
+  "price_vnd": 699000,
+  "level": "intermediate",
+  "category": "business",
+  "pages": 120,
+  "cover_image_url": "https://example.com/workbook-cover.jpg",
+  "is_free": false,
+  "is_active": true,
+  "created_at": "2024-01-01T00:00:00.000Z",
+  "features": [...],
+  "reviews": [...]
+}
+```
+
+### Create Workbook (Admin Only)
+
+```http
+POST /api/admin/workbooks
+```
+
+**Headers:** `Authorization: Bearer <admin-token>`
+
+**Request Body:**
+
+```json
+{
+  "title_en": "Advanced Business Writing",
+  "title_vi": "Viết Kinh doanh Nâng cao",
+  "description_en": "Advanced business writing techniques",
+  "description_vi": "Kỹ thuật viết kinh doanh nâng cao",
+  "price_usd": 39.99,
+  "price_vnd": 999000,
+  "original_price_usd": 49.99,
+  "original_price_vnd": 1199000,
+  "level": "advanced",
+  "category": "business",
+  "pages": 150,
+  "pdf_url": "https://example.com/advanced-business-writing.pdf",
+  "cover_image_url": "https://example.com/workbook-cover.jpg",
+  "is_free": false,
+  "is_active": true
+}
+```
+
+**Response:**
+
+```json
+{
+  "id": "uuid",
+  "title_en": "Advanced Business Writing",
+  "title_vi": "Viết Kinh doanh Nâng cao",
+  "description_en": "Advanced business writing techniques",
+  "price_usd": 39.99,
+  "price_vnd": 999000,
+  "level": "advanced",
+  "category": "business",
+  "pages": 150,
+  "is_active": true,
+  "created_at": "2024-01-01T00:00:00.000Z"
+}
+```
+
+### Update Workbook (Admin Only)
+
+```http
+PUT /api/admin/workbooks/:id
+```
+
+**Headers:** `Authorization: Bearer <admin-token>`
+
+**Request Body:**
+
+```json
+{
+  "title_en": "Updated Workbook Title",
+  "price_usd": 34.99,
+  "price_vnd": 849000,
+  "is_active": false
+}
+```
+
+### Delete Workbook (Admin Only)
+
+```http
+DELETE /api/admin/workbooks/:id
+```
+
+**Headers:** `Authorization: Bearer <admin-token>`
+
+**Response:**
+
+```json
+{
+  "message": "Workbook deleted successfully"
+}
+```
+
+### Grant Workbook Access (Admin Only)
+
+```http
+POST /api/admin/workbooks/grant-access
+```
+
+**Headers:** `Authorization: Bearer <admin-token>`
+
+**Request Body:**
+
+```json
+{
+  "user_id": "uuid",
+  "workbook_id": "uuid",
+  "payment_amount": 999000,
+  "payment_currency": "VND"
+}
+```
+
+**Response:**
+
+```json
+{
+  "id": "uuid",
+  "user": {
+    "id": "uuid",
+    "name": "John Doe"
+  },
+  "workbook": {
+    "id": "uuid",
+    "title_en": "Advanced Business Writing"
+  },
+  "payment_status": "completed",
+  "payment_amount": 999000,
+  "payment_currency": "VND",
+  "purchase_date": "2024-01-01T00:00:00.000Z"
+}
+```
+
+### Get User Workbook Access (Admin Only)
+
+```http
+GET /api/admin/users/:id/workbooks
+```
+
+**Headers:** `Authorization: Bearer <admin-token>`
+
+**Response:**
+
+```json
+[
+  {
+    "id": "uuid",
+    "workbook": {
+      "id": "uuid",
+      "title_en": "Business Vocabulary Workbook",
+      "title_vi": "Sách bài tập Từ vựng Kinh doanh"
+    },
+    "payment_status": "completed",
+    "payment_amount": 699000,
+    "payment_currency": "VND",
+    "purchase_date": "2024-01-01T00:00:00.000Z"
+  }
+]
+```
+
+### Revoke Workbook Access (Admin Only)
+
+```http
+DELETE /api/admin/users/:userId/workbooks/:workbookId
+```
+
+**Headers:** `Authorization: Bearer <admin-token>`
+
+**Response:**
+
+```json
+{
+  "message": "Workbook access revoked successfully"
 }
 ```
 

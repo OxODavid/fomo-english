@@ -239,10 +239,17 @@ class ApiClient {
     search?: string;
     page?: number;
     limit?: number;
+    sortBy?: string;
+    sortOrder?: string;
   }) {
     return this.request<{
       data: any[];
-      meta: any;
+      meta: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      };
     }>({
       url: "/api/workbooks",
       method: "GET",
@@ -250,18 +257,22 @@ class ApiClient {
     });
   }
 
-  async getWorkbook(id: string) {
-    return this.request<any>({
-      url: `/api/workbooks/${id}`,
+  async getMyWorkbooks() {
+    return this.request<{
+      workbooks: any[];
+      total: number;
+    }>({
+      url: "/api/workbooks/my-workbooks",
       method: "GET",
     });
   }
 
   async purchaseWorkbook(
-    id: string,
+    workbookId: string,
     data: {
       full_name: string;
       phone: string;
+      notes?: string;
       amount: number;
       currency: string;
     },
@@ -270,18 +281,25 @@ class ApiClient {
       payment_request_id: string;
       message: string;
     }>({
-      url: `/api/workbooks/${id}/purchase`,
+      url: `/api/workbooks/${workbookId}/purchase`,
       method: "POST",
       data,
     });
   }
 
-  async downloadWorkbook(id: string) {
+  async downloadWorkbook(workbookId: string) {
     return this.request<{
       download_url: string;
       expires_at: string;
     }>({
-      url: `/api/workbooks/${id}/download`,
+      url: `/api/workbooks/${workbookId}/download`,
+      method: "GET",
+    });
+  }
+
+  async getWorkbook(id: string) {
+    return this.request<any>({
+      url: `/api/workbooks/${id}`,
       method: "GET",
     });
   }

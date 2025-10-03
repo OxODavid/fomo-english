@@ -42,9 +42,14 @@ interface CourseCardProps {
     purchase_date?: string;
   };
   locale?: string;
+  onShowLogin?: () => void;
 }
 
-export function CourseCard({ course, locale = "en" }: CourseCardProps) {
+export function CourseCard({
+  course,
+  locale = "en",
+  onShowLogin,
+}: CourseCardProps) {
   const { user } = useAuth();
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
 
@@ -65,7 +70,8 @@ export function CourseCard({ course, locale = "en" }: CourseCardProps) {
 
   const handlePurchaseClick = () => {
     if (!user) {
-      // Could trigger login modal here
+      // Show login modal
+      onShowLogin?.();
       return;
     }
     if (isPurchased) {
