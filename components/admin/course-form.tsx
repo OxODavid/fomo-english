@@ -841,6 +841,7 @@ export function CourseForm({
                                 )
                               }
                               placeholder="https://quizlet.com/quiz1"
+                              required
                             />
                           </div>
                         </div>
