@@ -188,6 +188,50 @@ class ApiClient {
     });
   }
 
+  async getMyCourses() {
+    return this.request<{
+      courses: any[];
+      total: number;
+    }>({
+      url: "/api/courses/my-courses",
+      method: "GET",
+    });
+  }
+
+  async getCourseProgress(courseId: string) {
+    return this.request<{
+      id: string;
+      completed_videos: number;
+      total_videos: number;
+      progress_percentage: number;
+      last_accessed: string;
+      completed_at?: string;
+    }>({
+      url: `/api/courses/${courseId}/progress`,
+      method: "GET",
+    });
+  }
+
+  async markVideoComplete(
+    videoId: string,
+    data: { watch_time_minutes: number },
+  ) {
+    return this.request<{
+      message: string;
+      points_earned: number;
+      total_points: number;
+      progress: {
+        is_completed: boolean;
+        completed_at: string;
+        points_earned: number;
+      };
+    }>({
+      url: `/api/videos/${videoId}/complete`,
+      method: "POST",
+      data,
+    });
+  }
+
   async getWorkbooks(params?: {
     category?: string;
     level?: string;
@@ -462,6 +506,50 @@ class ApiClient {
   }) {
     return this.request<any>({
       url: "/api/admin/courses",
+      method: "POST",
+      data,
+    });
+  }
+
+  async createCourseWithContent(data: {
+    title_en: string;
+    title_vi: string;
+    description_en: string;
+    description_vi?: string;
+    price_usd: number;
+    price_vnd: number;
+    original_price_usd?: number;
+    original_price_vnd?: number;
+    level: string;
+    category: string;
+    duration_hours: number;
+    instructor_id?: string;
+    image_url?: string;
+    is_lifetime_access?: boolean;
+    is_active?: boolean;
+    sections?: Array<{
+      title_en: string;
+      title_vi: string;
+      description_en: string;
+      description_vi?: string;
+      sort_order: number;
+      is_active: boolean;
+      videos: Array<{
+        title_en: string;
+        title_vi: string;
+        description_en: string;
+        description_vi?: string;
+        video_url: string;
+        quiz_url?: string;
+        duration_minutes: number;
+        points_reward: number;
+        sort_order: number;
+        is_active: boolean;
+      }>;
+    }>;
+  }) {
+    return this.request<any>({
+      url: "/api/admin/courses/with-content",
       method: "POST",
       data,
     });

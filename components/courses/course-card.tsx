@@ -38,15 +38,18 @@ interface CourseCardProps {
       feature_en: string;
       feature_vi?: string;
     }>;
+    is_purchased?: boolean;
+    purchase_date?: string;
   };
   locale?: string;
 }
 
 export function CourseCard({ course, locale = "en" }: CourseCardProps) {
-  const { user, hasPurchasedCourse } = useAuth();
+  const { user } = useAuth();
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
 
-  const isPurchased = user ? hasPurchasedCourse(course.id) : false;
+  // Use is_purchased from API response when user is logged in
+  const isPurchased = user ? course.is_purchased || false : false;
   const title = locale === "vi" ? course.title_vi : course.title_en;
   const description =
     locale === "vi"
@@ -65,7 +68,12 @@ export function CourseCard({ course, locale = "en" }: CourseCardProps) {
       // Could trigger login modal here
       return;
     }
-    setShowPurchaseModal(true);
+    if (isPurchased) {
+      // Navigate to course detail page
+      window.location.href = `/courses/${course.id}`;
+    } else {
+      setShowPurchaseModal(true);
+    }
   };
 
   return (
@@ -175,14 +183,12 @@ export function CourseCard({ course, locale = "en" }: CourseCardProps) {
             <Button
               onClick={handlePurchaseClick}
               className="primary-gradient text-white"
-              disabled={isPurchased}
             >
               {isPurchased ? (
-                locale === "en" ? (
-                  "Owned"
-                ) : (
-                  "Đã sở hữu"
-                )
+                <>
+                  <Play className="mr-2 h-4 w-4" />
+                  {locale === "en" ? "View Course" : "Xem khóa học"}
+                </>
               ) : (
                 <>
                   <ShoppingCart className="mr-2 h-4 w-4" />
@@ -199,7 +205,8 @@ export function CourseCard({ course, locale = "en" }: CourseCardProps) {
         onClose={() => setShowPurchaseModal(false)}
         course={course}
         onPurchaseSuccess={() => {
-          // Refresh user data or show success message
+          // Refresh the page to show updated purchase status
+          window.location.reload();
         }}
       />
     </>

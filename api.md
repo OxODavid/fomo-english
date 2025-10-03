@@ -4,6 +4,78 @@
 
 FOMO English is a comprehensive English learning platform targeting Vietnamese professionals. The platform offers industry-specific English courses with video lessons and interactive quizzes, downloadable workbooks, and free vocabulary resources. Users purchase courses individually with lifetime access.
 
+## Tech Stack
+
+- **Framework**: NestJS with TypeScript
+- **Database**: PostgreSQL with TypeORM
+- **Authentication**: JWT with Passport
+- **Password Hashing**: bcrypt
+- **Validation**: class-validator & class-transformer
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 18+
+- PostgreSQL 14+
+- npm or yarn
+
+### Installation
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd fomo-backend
+
+# Install dependencies
+yarn install
+
+# Set up environment variables
+cp env.example .env
+# Edit .env with your database credentials
+
+# Run database migrations
+yarn build
+yarn start:dev
+```
+
+### Environment Variables
+
+```env
+# Database
+POSTGRESHOST=localhost
+POSTGRESPORT=5432
+POSTGRESUSER=your_username
+POSTGRESPASSWORD=your_password
+POSTGRESDB=fomo_english
+
+# JWT
+JWT_SECRET=your-super-secret-jwt-key
+JWT_EXPIRES_IN=1h
+
+# Application
+NODE_ENV=development
+PORT=3001
+```
+
+## Project Structure
+
+```
+src/
+├── entities/
+│   └── user.entity.ts          # User entity definition
+├── modules/
+│   └── user/
+│       ├── dto/
+│       │   ├── create-user.dto.ts
+│       │   └── update-user.dto.ts
+│       ├── user.controller.ts   # User REST endpoints
+│       ├── user.service.ts      # User business logic
+│       └── user.module.ts       # User module configuration
+├── app.module.ts               # Main application module
+└── main.ts                     # Application entry point
+```
+
 ## API Documentation
 
 ### Interactive Documentation (Swagger)
@@ -30,8 +102,6 @@ The API includes comprehensive interactive documentation powered by Swagger/Open
    - Test protected endpoints directly
 
 ### Base URL
-
-BASE_API_URL=https://fomo-backend-production-6d3a.up.railway.app
 
 ```
 http://localhost:3001
@@ -175,6 +245,8 @@ POST /api/auth/logout
 GET /api/courses
 ```
 
+**Headers:** `Authorization: Bearer <user-token>` (optional - for purchase status)
+
 **Query Parameters:**
 
 - `category` (optional): `business` | `technology` | `healthcare` | `ielts`
@@ -192,6 +264,8 @@ GET /api/courses?category=business&level=intermediate&page=1&limit=5
 ```
 
 **Response:**
+
+**Note:** If user is authenticated, each course will include `is_purchased` and `purchase_date` fields.
 
 ```json
 {
@@ -219,7 +293,9 @@ GET /api/courses?category=business&level=intermediate&page=1&limit=5
           "feature_en": "Lifetime access",
           "feature_vi": "Truy cập trọn đời"
         }
-      ]
+      ],
+      "is_purchased": true,
+      "purchase_date": "2024-01-01T00:00:00.000Z"
     }
   ],
   "meta": {
@@ -228,6 +304,47 @@ GET /api/courses?category=business&level=intermediate&page=1&limit=5
     "limit": 5,
     "totalPages": 5
   }
+}
+```
+
+### Get My Courses (User's Purchased Courses)
+
+```http
+GET /api/courses/my-courses
+```
+
+**Headers:** `Authorization: Bearer <user-token>`
+
+**Response:**
+
+```json
+{
+  "courses": [
+    {
+      "id": "uuid",
+      "title_en": "Complete English Grammar Course",
+      "title_vi": "Khóa Học Ngữ Pháp Tiếng Anh Hoàn Chỉnh",
+      "description_en": "Complete English grammar course with exercises",
+      "description_vi": "Khóa học ngữ pháp tiếng Anh hoàn chỉnh với bài tập",
+      "price_usd": 99.0,
+      "price_vnd": 2399000,
+      "level": "intermediate",
+      "category": "grammar",
+      "duration_hours": 20,
+      "total_videos": 15,
+      "image_url": "https://example.com/grammar-course.jpg",
+      "is_lifetime_access": true,
+      "purchased_at": "2024-01-01T00:00:00.000Z",
+      "payment_amount": 99.0,
+      "payment_currency": "USD",
+      "instructor": {
+        "id": "uuid",
+        "name": "John Smith",
+        "profile_image_url": "https://example.com/instructor.jpg"
+      }
+    }
+  ],
+  "total": 1
 }
 ```
 
@@ -1430,6 +1547,137 @@ POST /api/admin/courses
 }
 ```
 
+### Create Course with Content (Admin Only)
+
+```http
+POST /api/admin/courses/with-content
+```
+
+**Headers:** `Authorization: Bearer <admin-token>`
+
+**Request Body:**
+
+```json
+{
+  "title_en": "Complete English Grammar Course",
+  "title_vi": "Khóa Học Ngữ Pháp Tiếng Anh Hoàn Chỉnh",
+  "description_en": "Complete English grammar course with exercises",
+  "description_vi": "Khóa học ngữ pháp tiếng Anh hoàn chỉnh với bài tập",
+  "price_usd": 99.0,
+  "price_vnd": 2399000,
+  "original_price_usd": 149.0,
+  "original_price_vnd": 3599000,
+  "level": "intermediate",
+  "category": "grammar",
+  "duration_hours": 20,
+  "instructor_id": "uuid",
+  "image_url": "https://example.com/grammar-course.jpg",
+  "is_lifetime_access": true,
+  "is_active": true,
+  "sections": [
+    {
+      "title_en": "Basic Tenses",
+      "title_vi": "Các Thì Cơ Bản",
+      "description_en": "Learn basic English tenses",
+      "description_vi": "Học các thì tiếng Anh cơ bản",
+      "sort_order": 1,
+      "is_active": true,
+      "videos": [
+        {
+          "title_en": "Present Simple Tense",
+          "title_vi": "Thì Hiện Tại Đơn",
+          "description_en": "Learn present simple tense",
+          "description_vi": "Học thì hiện tại đơn",
+          "video_url": "https://youtube.com/watch?v=abc123",
+          "quiz_url": "https://quizlet.com/quiz1",
+          "duration_minutes": 15,
+          "points_reward": 10,
+          "sort_order": 1,
+          "is_active": true
+        },
+        {
+          "title_en": "Past Simple Tense",
+          "title_vi": "Thì Quá Khứ Đơn",
+          "description_en": "Learn past simple tense",
+          "description_vi": "Học thì quá khứ đơn",
+          "video_url": "https://youtube.com/watch?v=def456",
+          "quiz_url": "https://quizlet.com/quiz2",
+          "duration_minutes": 18,
+          "points_reward": 12,
+          "sort_order": 2,
+          "is_active": true
+        }
+      ]
+    },
+    {
+      "title_en": "Advanced Tenses",
+      "title_vi": "Các Thì Nâng Cao",
+      "description_en": "Learn advanced English tenses",
+      "description_vi": "Học các thì tiếng Anh nâng cao",
+      "sort_order": 2,
+      "is_active": true,
+      "videos": [
+        {
+          "title_en": "Present Perfect Tense",
+          "title_vi": "Thì Hiện Tại Hoàn Thành",
+          "description_en": "Learn present perfect tense",
+          "description_vi": "Học thì hiện tại hoàn thành",
+          "video_url": "https://youtube.com/watch?v=ghi789",
+          "quiz_url": "https://quizlet.com/quiz3",
+          "duration_minutes": 20,
+          "points_reward": 15,
+          "sort_order": 1,
+          "is_active": true
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Response:**
+
+```json
+{
+  "id": "uuid",
+  "title_en": "Complete English Grammar Course",
+  "title_vi": "Khóa Học Ngữ Pháp Tiếng Anh Hoàn Chỉnh",
+  "description_en": "Complete English grammar course with exercises",
+  "price_usd": 99.0,
+  "price_vnd": 2399000,
+  "level": "intermediate",
+  "category": "grammar",
+  "duration_hours": 20,
+  "total_videos": 3,
+  "is_active": true,
+  "created_at": "2024-01-01T00:00:00.000Z",
+  "sections": [
+    {
+      "id": "uuid",
+      "title_en": "Basic Tenses",
+      "title_vi": "Các Thì Cơ Bản",
+      "sort_order": 1,
+      "videos": [
+        {
+          "id": "uuid",
+          "title_en": "Present Simple Tense",
+          "title_vi": "Thì Hiện Tại Đơn",
+          "video_url": "https://youtube.com/watch?v=abc123",
+          "quiz_url": "https://quizlet.com/quiz1",
+          "duration_minutes": 15,
+          "points_reward": 10,
+          "sort_order": 1
+        }
+      ]
+    }
+  ],
+  "instructor": {
+    "id": "uuid",
+    "name": "John Smith"
+  }
+}
+```
+
 ### Update Course (Admin Only)
 
 ```http
@@ -1706,3 +1954,174 @@ The application uses the following main entities:
 - **Workbooks**: Downloadable PDF resources
 - **PaymentRequest**: Handle course/workbook purchases
 - **FreeDownload**: Free vocabulary resources
+
+## Development Setup
+
+### Prerequisites
+
+- Node.js 22+
+- Docker and Docker Compose
+- PostgreSQL (if running locally without Docker)
+
+### Local Development with Docker
+
+1. Clone the repository
+2. Copy environment variables:
+
+   ```bash
+   cp env.example .env
+   ```
+
+3. Start the development environment:
+
+   ```bash
+   docker-compose up -d
+   ```
+
+4. The API will be available at `http://localhost:3000`
+
+### Local Development without Docker
+
+1. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+2. Set up PostgreSQL database and update environment variables in `.env`
+
+3. Start the development server:
+   ```bash
+   npm run start:dev
+   ```
+
+## Railway Deployment
+
+### Automatic Deployment
+
+1. Connect your GitHub repository to Railway
+2. Railway will automatically detect the `railway.json` configuration
+3. Set the following environment variables in Railway dashboard:
+
+### Required Environment Variables
+
+```bash
+# Application
+NODE_ENV=production
+PORT=3000
+
+# Database (Railway will provide these automatically if you add PostgreSQL service)
+POSTGRESHOST=your_railway_postgres_host
+POSTGRESPORT=5432
+POSTGRESUSER=your_railway_postgres_user
+POSTGRESPASSWORD=your_railway_postgres_password
+POSTGRESDB=your_railway_postgres_db
+```
+
+### Manual Deployment Steps
+
+1. Install Railway CLI:
+
+   ```bash
+   yarn global add @railway/cli
+   # or
+   npm install -g @railway/cli
+   ```
+
+2. Login to Railway:
+
+   ```bash
+   railway login
+   ```
+
+3. Initialize Railway project:
+
+   ```bash
+   railway init
+   ```
+
+4. Add PostgreSQL service:
+
+   ```bash
+   railway add postgresql
+   ```
+
+5. Deploy:
+   ```bash
+   railway up
+   ```
+
+### Database Configuration
+
+Railway automatically provides PostgreSQL connection variables. The application is configured to:
+
+- Use SSL in production
+- Auto-synchronize database schema (disable in production if needed)
+- Connect using individual connection parameters or DATABASE_URL
+
+## Environment Variables
+
+| Variable           | Description       | Default       |
+| ------------------ | ----------------- | ------------- |
+| `NODE_ENV`         | Environment mode  | `development` |
+| `PORT`             | Application port  | `3000`        |
+| `POSTGRESHOST`     | Database host     | `localhost`   |
+| `POSTGRESPORT`     | Database port     | `5432`        |
+| `POSTGRESUSER`     | Database username | `postgres`    |
+| `POSTGRESPASSWORD` | Database password | `postgres`    |
+| `POSTGRESDB`       | Database name     | `fomo_db`     |
+
+## Scripts
+
+- `yarn build` - Build the application
+- `yarn start` - Start production server
+- `yarn start:dev` - Start development server with hot reload
+- `yarn start:prod` - Start production server from built files
+
+## Health Check
+
+The application includes a health check endpoint at `/health` that Railway uses to monitor the service health.
+
+## Database Schema
+
+### Users Table
+
+| Column    | Type      | Constraints                 |
+| --------- | --------- | --------------------------- |
+| id        | INTEGER   | PRIMARY KEY, AUTO INCREMENT |
+| username  | VARCHAR   | UNIQUE, NOT NULL            |
+| email     | VARCHAR   | UNIQUE, NOT NULL            |
+| createdAt | TIMESTAMP | DEFAULT NOW()               |
+| updatedAt | TIMESTAMP | DEFAULT NOW()               |
+
+## Security Features
+
+- Input validation using class-validator
+- Unique constraints on username and email
+- CORS enabled for cross-origin requests
+- Non-root user in Docker container
+- Health checks for monitoring
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Database connection failed**: Check environment variables and ensure PostgreSQL is running
+2. **Port already in use**: Change the PORT environment variable
+3. **Build fails**: Ensure all dependencies are installed with `yarn install`
+
+### Logs
+
+View application logs in Railway dashboard or use:
+
+```bash
+railway logs
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request

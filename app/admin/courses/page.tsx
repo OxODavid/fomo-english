@@ -43,6 +43,31 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+interface VideoData {
+  id?: string;
+  title_en: string;
+  title_vi: string;
+  description_en: string;
+  description_vi?: string;
+  video_url: string;
+  quiz_url?: string;
+  duration_minutes: number;
+  points_reward: number;
+  sort_order: number;
+  is_active: boolean;
+}
+
+interface SectionData {
+  id?: string;
+  title_en: string;
+  title_vi: string;
+  description_en: string;
+  description_vi?: string;
+  sort_order: number;
+  is_active: boolean;
+  videos: VideoData[];
+}
+
 interface Course {
   id: string;
   title_en: string;
@@ -66,6 +91,7 @@ interface Course {
   is_lifetime_access?: boolean;
   is_active: boolean;
   created_at: string;
+  sections?: SectionData[];
 }
 
 export default function AdminCoursesPage() {
@@ -225,8 +251,17 @@ export default function AdminCoursesPage() {
           description: "Course updated successfully",
         });
       } else {
-        // Create new course
-        const newCourse = await apiClient.createCourse(courseData);
+        // Create new course - use with-content API if sections are provided
+        let newCourse;
+        if (courseData.sections && courseData.sections.length > 0) {
+          // Remove total_videos for with-content API as it's calculated automatically
+          const { total_videos, ...courseDataWithoutTotalVideos } = courseData;
+          newCourse = await apiClient.createCourseWithContent(
+            courseDataWithoutTotalVideos,
+          );
+        } else {
+          newCourse = await apiClient.createCourse(courseData);
+        }
         setCourses([newCourse, ...courses]);
         setIsCreateDialogOpen(false);
         toast({

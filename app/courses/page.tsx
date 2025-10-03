@@ -24,10 +24,12 @@ import {
   BookOpen,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/language-context";
+import { useAuth } from "@/contexts/auth-context";
 import { apiClient } from "@/lib/api";
 
 export default function CoursesPage() {
   const { locale } = useLanguage();
+  const { user } = useAuth();
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");

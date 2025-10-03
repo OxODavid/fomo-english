@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -23,30 +23,71 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useLanguage } from "@/contexts/language-context";
+import { apiClient } from "@/lib/api";
+
+interface PurchasedCourse {
+  id: string;
+  title_en: string;
+  title_vi: string;
+  description_en: string;
+  description_vi?: string;
+  price_usd: number;
+  price_vnd: number;
+  level: string;
+  category: string;
+  duration_hours: number;
+  total_videos: number;
+  image_url?: string;
+  is_lifetime_access: boolean;
+  purchased_at: string;
+  payment_amount: number;
+  payment_currency: string;
+  instructor: {
+    id: string;
+    name: string;
+    profile_image_url?: string;
+  };
+}
 
 export function UserDashboard() {
-  const { user, hasPurchasedCourse } = useAuth();
+  const { user, hasPurchasedCourse, refreshUserData } = useAuth();
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("overview");
+  const [purchasedCourses, setPurchasedCourses] = useState<PurchasedCourse[]>(
+    [],
+  );
+  const [isLoadingCourses, setIsLoadingCourses] = useState(true);
+
+  useEffect(() => {
+    fetchPurchasedCourses();
+  }, []);
+
+  const fetchPurchasedCourses = async () => {
+    try {
+      setIsLoadingCourses(true);
+      // Refresh user data first to get latest purchases
+      await refreshUserData();
+      const response = await apiClient.getMyCourses();
+      setPurchasedCourses(response.courses || []);
+    } catch (error) {
+      console.error("Failed to fetch purchased courses:", error);
+      // Fallback to mock data if API fails
+      setPurchasedCourses([]);
+    } finally {
+      setIsLoadingCourses(false);
+    }
+  };
 
   if (!user) return null;
 
   // Helper functions for backward compatibility
   const hasActiveSubscription = () => {
-    // Since we don't have subscription in new API, we'll check if user has any completed course purchases
-    return (
-      user.course_purchases?.some(
-        (purchase) => purchase.payment_status === "completed",
-      ) || false
-    );
+    // Check if user has any purchased courses from API
+    return purchasedCourses.length > 0;
   };
 
   const getPurchasedCoursesCount = () => {
-    return (
-      user.course_purchases?.filter(
-        (purchase) => purchase.payment_status === "completed",
-      ).length || 0
-    );
+    return purchasedCourses.length;
   };
 
   const hasJoinedCommunity = () => {
@@ -73,16 +114,16 @@ export function UserDashboard() {
     },
   ];
 
-  // Get real course progress from user data
+  // Get real course progress from API data
   const getCourseProgress = () => {
-    if (!user.course_progress) return [];
+    if (isLoadingCourses) return [];
 
-    return user.course_progress.map((progress) => ({
-      id: progress.id,
-      title: progress.course?.title_en || "Course",
-      progress: progress.progress_percentage || 0,
-      totalLessons: progress.total_videos || 0,
-      completedLessons: progress.completed_videos || 0,
+    return purchasedCourses.map((course) => ({
+      id: course.id,
+      title: course.title_en,
+      progress: 0, // Will be fetched from progress API later
+      totalLessons: course.total_videos || 0,
+      completedLessons: 0, // Will be fetched from progress API later
     }));
   };
 
@@ -223,7 +264,14 @@ export function UserDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {getPurchasedCoursesCount() > 0 ? (
+              {isLoadingCourses ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">
+                    Loading your courses...
+                  </p>
+                </div>
+              ) : getPurchasedCoursesCount() > 0 ? (
                 <div className="space-y-6">
                   {getCourseProgress().map((course) => (
                     <div key={course.id} className="space-y-2">
@@ -239,9 +287,11 @@ export function UserDashboard() {
                           {course.completedLessons} of {course.totalLessons}{" "}
                           lessons completed
                         </span>
-                        <Button variant="ghost" size="sm">
-                          <BookOpen className="h-4 w-4 mr-2" />
-                          Continue Learning
+                        <Button variant="ghost" size="sm" asChild>
+                          <a href={`/courses/${course.id}`}>
+                            <BookOpen className="h-4 w-4 mr-2" />
+                            Continue Learning
+                          </a>
                         </Button>
                       </div>
                     </div>

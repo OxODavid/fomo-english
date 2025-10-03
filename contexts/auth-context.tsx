@@ -45,6 +45,7 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
   hasPurchasedCourse: (courseId: string) => boolean;
   hasPurchasedWorkbook: (workbookId: string) => boolean;
+  refreshUserData: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -167,6 +168,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     );
   };
 
+  const refreshUserData = async () => {
+    try {
+      const userData = await apiClient.getUserProfile();
+      setUser(userData);
+    } catch (error) {
+      console.error("Failed to refresh user data:", error);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -179,6 +189,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         refreshProfile,
         hasPurchasedCourse,
         hasPurchasedWorkbook,
+        refreshUserData,
       }}
     >
       {children}
